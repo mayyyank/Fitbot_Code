@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>FitBot - Chatbot</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <!-- Vendor CSS Files -->
+  <link href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='vendor/bootstrap-icons/bootstrap-icons.css') }}" rel="stylesheet">
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
+  <style>
+    /* Scale down the entire page */
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      background: url('{{ url_for("static", filename="images/hero-bg.png") }}') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+      font-size: 13px;
+      transform: scale(0.92);
+      transform-origin: top center;
+    }
+
+    #chatbot {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      margin-top: 50px;
+      position: relative;
+      padding: 20px; /* Added padding to prevent elements from touching the edges */
+    }
+
+    #chatbot-header {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      background: #4154f1;
+      color: white;
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #chatbot-header img {
+      width: 50px;
+      height: 50px;
+      margin-right: 15px;
+      border-radius: 50%;
+    }
+
+    #chatbot-header h4 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    #chatbot-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    .message {
+      display: flex;
+      margin-bottom: 15px;
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message .text {
+      max-width: 75%;
+      padding: 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      background: #f1f1f1;
+      box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .message.user .text {
+      background: #4154f1;
+      color: white;
+      border-top-right-radius: 0;
+    }
+
+    .message.bot .text {
+      background: #f1f1f1;
+      border-top-left-radius: 0;
+    }
+
+    .message img {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+    }
+
+    #chatbot-footer {
+      display: flex;
+      align-items: center;
+      padding: 15px;
+      border-top: 1px solid #ddd;
+      background: #fff;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 25px;
+      margin-right: 15px;
+      font-size: 14px;
+      resize: none;
+      min-height: 40px;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    #chatbot-footer button {
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+
+    #chatbot-footer button img {
+      width: 30px;
+      height: 30px;
+    }
+
+    .dropdown-section {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 30px;
+      justify-content: center;
+      width: 100%;
+      margin-top: 20px; /* Added margin-top to create space between dropdowns and messages */
+    }
+
+    select {
+      padding: 10px 15px;
+      font-size: 14px;
+      border-radius: 15px;
+      border: 1px solid #ccc;
+      background-color: #fff;
+      width: 200px;
+    }
+
+    select:hover,
+    select:focus {
+      border-color: #4154f1;
+      box-shadow: 0 0 5px rgba(65, 84, 241, 0.3);
+      outline: none;
+    }
+
+    button.generate-btn {
+      background-color: #4154f1;
+      color: white;
+      border: none;
+      padding: 12px 22px;
+      border-radius: 15px;
+      cursor: pointer;
+      font-size: 14px;
+      width: 200px;
+      transition: all 0.3s ease;
+    }
+
+    button.generate-btn:hover {
+      background-color: #374cb7;
+    }
+
+    .popup {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      height: 100%;
+      margin: auto;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+      overflow-y: auto;
+      margin-top: 32px;
+    }
+
+    .popup h5 {
+      margin-bottom: 25px;
+      font-size: 24px;
+      color: #4154f1;
+    }
+
+    .popup button {
+      background-color: #4154f1;
+      color: white;
+      border: none;
+      padding: 14px 25px;
+      border-radius: 15px;
+      cursor: pointer;
+    }
+
+    .popup button:hover {
+      background-color: #374cb7;
+    }
+
+    .popup .popup-content {
+      padding: 25px;
+      font-size: 16px;
+    }
+
+    .popup-content p {
+      font-size: 16px;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="chatbot">
+    <div id="chatbot-header">
+      <img src="{{ url_for('static', filename='images/bot-icon.png') }}" alt="Bot Icon">
+      <h4>FitBot</h4>
+    </div>
+    <div id="chatbot-messages" style="text-align: justify"></div>
+    <div id="chatbot-footer">
+      <textarea id="user-input" placeholder="Type your message..."></textarea>
+      <button id="send-btn">
+        <img src="{{ url_for('static', filename='images/send.png') }}" alt="Send Button">
+      </button>
+    </div>
+  </div>
+
+  <div class="dropdown-section">
+    <select id="fitnessLevel">
+      <option value="" disabled selected>Fitness Level</option>
+      <option value="Beginner">Beginner</option>
+      <option value="Intermediate">Intermediate</option>
+      <option value="Expert">Expert</option>
+    </select>
+    <select id="equipmentAccess">
+      <option value="" disabled selected>Equipment Access</option>
+      <option value="Bands">Bands</option>
+      <option value="Barbell">Barbell</option>
+      <option value="Kettlebells">Kettlebells</option>
+      <option value="Dumbbell">Dumbbell</option>
+      <option value="Other">Other</option>
+      <option value="Cable">Cable</option>
+      <option value="Machine">Machine</option>
+      <option value="Body Only">Body Only</option>
+      <option value="Medicine Ball">Medicine Ball</option>
+      <option value="No equipment required">No equipment required</option>
+      <option value="Exercise Ball">Exercise Ball</option>
+      <option value="Foam Roll">Foam Roll</option>
+      <option value="E-Z Curl Bar">E-Z Curl Bar</option>
+    </select>
+    <select id="bodyPart">
+      <option value="" disabled selected>Body Part to Train</option>
+      <option value="Abdominals">Abdominals</option>
+      <option value="Adductors">Adductors</option>
+      <option value="Abductors">Abductors</option>
+      <option value="Biceps">Biceps</option>
+      <option value="Calves">Calves</option>
+      <option value="Chest">Chest</option>
+      <option value="Forearms">Forearms</option>
+      <option value="Glutes">Glutes</option>
+      <option value="Hamstrings">Hamstrings</option>
+      <option value="Lats">Lats</option>
+      <option value="Lower Back">Lower Back</option>
+      <option value="Middle Back">Middle Back</option>
+      <option value="Traps">Traps</option>
+      <option value="Neck">Neck</option>
+      <option value="Quadriceps">Quadriceps</option>
+      <option value="Shoulders">Shoulders</option>
+      <option value="Triceps">Triceps</option>
+    </select>
+    <button class="generate-btn" id="generate-btn">Recommend Exercises</button>
+  </div>
+
+  <div class="popup" id="exercise-popup">
+    <h5>Exercise List</h5>
+    <div class="popup-content" id="exercise-list"></div>
+    <button onclick="closePopup()">Close</button>
+  </div>
+
+  <script>
+    const sendBtn = document.getElementById('send-btn');
+    const userInput = document.getElementById('user-input');
+    const generateBtn = document.getElementById('generate-btn');
+    const exercisePopup = document.getElementById('exercise-popup');
+    const exerciseList = document.getElementById('exercise-list');
+
+    window.onload = () => {
+      addMessage("Hi there! I'm FitBot, your personal fitness assistant. How can I help you today?", 'bot', '{{ url_for("static", filename="images/bot-icon.png") }}');
+    };
+
+    sendBtn.addEventListener('click', () => {
+      const userText = userInput.value.trim();
+      if (userText) {
+        addMessage(userText, 'user', '{{ url_for("static", filename="images/user-icon.png") }}');
+        userInput.value = '';
+        getBotResponse(userText);  // Call the method to get response from the backend
+      }
+    });
+
+    function addMessage(text, sender, imgSrc) {
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message', sender);
+
+      const img = document.createElement('img');
+      img.src = imgSrc;
+
+      const textDiv = document.createElement('div');
+      textDiv.classList.add('text');
+      textDiv.textContent = text;
+
+      messageDiv.appendChild(img);
+      messageDiv.appendChild(textDiv);
+
+      document.getElementById('chatbot-messages').appendChild(messageDiv);
+      document.getElementById('chatbot-messages').scrollTop = document.getElementById('chatbot-messages').scrollHeight;
+    }
+
+    generateBtn.addEventListener('click', () => {
+  const fitnessLevel = document.getElementById('fitnessLevel').value;
+  const equipmentAccess = document.getElementById('equipmentAccess').value;
+  const bodyPart = document.getElementById('bodyPart').value;
+
+  if (!fitnessLevel || !equipmentAccess || !bodyPart) {
+    alert('Please select all options');
+    return;
+  }
+
+  // Send data to Flask backend
+  fetch('/generate_exercises', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      fitnessLevel: fitnessLevel,
+      equipmentAccess: equipmentAccess,
+      bodyPart: bodyPart
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.exercises) {
+      let exerciseContent = `
+        <table class="table table-striped table-hover">
+          <thead class="thead-dark">
+            <tr>
+              <th>Exercise Name</th>
+              <th>Description</th>
+              <th>How to Perform</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+      data.exercises.forEach(exercise => {
+        exerciseContent += `
+          <tr>
+            <td><strong>${exercise.name}</strong></td>
+            <td style="text-align: justify">${exercise.description ? `<p>${exercise.description}</p>` : 'N/A'}</td>
+            <td style="text-align: justify">${exercise.how_to}</td>
+          </tr>
+        `;
+      });
+      exerciseContent += `
+          </tbody>
+        </table>
+      `;
+      exerciseList.innerHTML = exerciseContent;
+      exercisePopup.style.display = 'block';
+    } else {
+      exerciseList.innerHTML = 'No exercises found';
+      exercisePopup.style.display = 'block';
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred while fetching exercises');
+  });
+});
+
+function closePopup() {
+  exercisePopup.style.display = 'none';
+}
+
+
+    function getBotResponse(query) {
+      addMessage("...", 'bot', '{{ url_for("static", filename="images/bot-icon.png") }}');  // Temporary message
+
+      fetch('/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: query })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.response) {
+          addMessage(data.response, 'bot', '{{ url_for("static", filename="images/bot-icon.png") }}');
+        } else {
+          addMessage("Sorry, I couldn't understand that.", 'bot', '{{ url_for("static", filename="images/bot-icon.png") }}');
+        }
+      })
+      .catch(() => {
+        addMessage("There was an error processing your request.", 'bot', '{{ url_for("static", filename="images/bot-icon.png") }}');
+      });
+    }
+  </script>
+</body>
+
+</html>
